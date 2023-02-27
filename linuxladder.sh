@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -u
 
@@ -92,8 +92,7 @@ remove_report_file() {
 
 display_actual_user() {
     echo -e "\nYou're running this tool as $yellowColour$(whoami)$endColour"
-    id
-    echo "\n"
+    echo -e "$(id)\n"
 }
 
 os_information() {
@@ -102,12 +101,53 @@ os_information() {
     (cat /proc/version || uname -a ) 1>>"$report_file_path" 2>/dev/null
 	lsb_release -a 1>>"$report_file_path" 2>/dev/null
 	cat /etc/os-release 1>>"$report_file_path" 2>/dev/null
+}
 
-    echo -e "\n$yellowColour#########################################$endColour\n" >> $report_file_path
+writable_folders_in_path() {
+    if [ ! -d /tmp ]; then
+        tmp=/dev/shm
+    else
+        tmp=$(mktemp -d)
+    fi
+
+    echo $PATH | sed 's/:/\n/g' > "$tmp/paths"
+
+    echo -e "\n$yellowColour########## [ PATH ENV ] ###########$endColour\n" >> $report_file_path
+
+    while IFS= read -r bin_path; do
+        if [ -w $bin_path ]; then
+            echo -e  "$bin_path$greenColour is writeable!$endColour $yellowColour[+] Path hijacking potential vulnerability$endColour" >> $report_file_path
+        else
+            echo -e "$bin_path$redColour is not writeable$endColour" >> $report_file_path
+        fi
+    done < "$tmp/paths"
+
+    rm -rf "$tmp/paths"
+}
+
+credentials_on_env() {
+    if [ -n "$(command -v env)" ]; then
+        echo -e "\n$yellowColour########## [ ENV VARIABLES FOUND FROM SPECIAL KEYWORDS ] ###########$endColour\n" >> $report_file_path
+
+        (env | grep -iE 'pass|key|cred|vault|api|shell|session|auth|admin|root|ssh') >> $report_file_path
+    fi
 }
 
 banner
 display_actual_user
 create_report_file
+
+echo -e "$cyanColour [+] Reading OS information...$endColour\n"
 os_information
+
+echo -e "$cyanColour [+] Checking PATH folders writeable permissions... $endColour\n"
+writable_folders_in_path
+
+echo -e "$cyanColour [+] Reading system ENV variables to find some sensitive data...\n"
+credentials_on_env
+
 remove_report_file
+
+echo -e "\n$yellowColour [ LINUX PRIVILEGE ESCALATION SCAN COMPLETED! ] $endColour"
+echo -e "\n$yellowColour GIVE SOME LOVE IF YOU LIKED THIS TOOL ON$endColour$blueColour https://github.com/0xp1n/linuxladder$endColour, THANK YOU ANYWAY FOR YOUR SUPPORT!$endColour"
+
