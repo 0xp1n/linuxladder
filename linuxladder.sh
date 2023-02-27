@@ -133,6 +133,18 @@ credentials_on_env() {
     fi
 }
 
+sudo_version() {
+    version=$(sudo -V | grep -i "sudo ver" | awk '{print $3}')
+
+    echo -e "\n$yellowColour########## [ SUDO VERSION VULNERABILITY CHECK - SEARCHSPLOIT ] ###########$endColour\n" >> $report_file_path
+    echo -e "VERSION: $version\n" >> $report_file_path
+
+    if [ -n "$(command -v searchsploit)" ]; then
+       searchsploit "$version" >> $report_file_path
+    fi
+}
+
+
 banner
 display_actual_user
 create_report_file
@@ -146,7 +158,10 @@ writable_folders_in_path
 echo -e "$cyanColour [+] Reading system ENV variables to find some sensitive data...\n"
 credentials_on_env
 
-remove_report_file
+echo -e "$cyanColour [+] Reading sudo version and search for exploits...$endColour"
+sudo_version
+
+#remove_report_file
 
 echo -e "\n$yellowColour [ LINUX PRIVILEGE ESCALATION SCAN COMPLETED! ] $endColour"
 echo -e "\n$yellowColour GIVE SOME LOVE IF YOU LIKED THIS TOOL ON$endColour$blueColour https://github.com/0xp1n/linuxladder$endColour, THANK YOU ANYWAY FOR YOUR SUPPORT!$endColour"
