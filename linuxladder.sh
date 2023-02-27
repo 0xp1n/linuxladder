@@ -4,7 +4,6 @@ set -u
 
 CURRENT_DIR=$(pwd)
 
-
 # ANSII ESCAPE CODE COLOURS
 greenColour='\033[0;32m'
 redColour='\033[0;31m'
@@ -25,11 +24,54 @@ banner() {
 _____|___|_| \_|\___/  _/\_\_____|_/    _\____/ ____/ _____|_| \_\
 EOF
 }
+###
+#   If the --no-report option is selected we only remove the file after the enumeration
+#   because is more easy to manage instead of append conditionals through the code
+###
+report_file_path=report
+create_report=true
 
-report_file_path=report.dat
+showHelpPanel() {
+    echo -e "A Linux Privilege Escalation enumeration tool to speed up the information gathering focus on productivity\n"
+    echo -e  "$yellowColour USAGE:\n $endColour \tlinuxladder [OPTIONS]"
+    echo -e "\n  BY DEFAULT THE TOOL CREATES A $report_file_path FILE ON THE ACTUAL DIRECTORY, TO DISABLE THIS BEHAVIOR USE --no-report\n"
+    echo -e "\t$greenColour-o <filepath>$endColour  Choose the destination path for the report file"
+    echo -e "\t$greenColour  --no-report$endColour Disable the creation of the report file and only show the output in terminal"
+    exit 1
+}
 
+# Translate wide-format options into short ones
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    '--help')      set -- "$@" '-h'   ;;
+    '--no-report') set -- "$@" '-n'   ;;
+    *)             set -- "$@" "$arg" ;;
+  esac
+done
+
+# Read user options
+while getopts ":o:nh:" arg; do
+    case $arg in
+        o)
+          if [ ! -z $OPTARG ]; then
+             report_file_path=$OPTARG
+          fi
+
+        ;;
+        n)
+            create_report=false
+        ;;
+        h | --help |  *)
+            showHelpPanel
+        ;;
+    esac
+
+done
+shift $(expr $OPTIND - 1) # remove options from positional parameters
+
+# Create the report file to fill all the information output after the enumeration
 create_report_file() {
-
     if [ ! -d $(dirname $report_file_path) ]; then
       mkdir -p $(dirname $report_file_path)
   fi
@@ -48,6 +90,11 @@ os_information() {
 banner
 create_report_file
 
-echo -e "$yellowColour########## [ OS INFORMATION ] ###########$endColour" >> $report_file_path
+echo -e "$yellowColour########## [ OS INFORMATION ] ###########$endColour\n" >> $report_file_path
 os_information
-echo -e "$yellowColour#########################################$endColour" >> $report_file_path
+echo -e "\n$yellowColour#########################################$endColour\n" >> $report_file_path
+
+if [ $create_report = false ]; then
+    find $(dirname $report_file_path) -type f -name "$(basename $report_file_path)" -exec rm {} \;
+fi
+
