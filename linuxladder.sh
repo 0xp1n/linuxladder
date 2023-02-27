@@ -73,28 +73,41 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 # Create the report file to fill all the information output after the enumeration
 create_report_file() {
     if [ ! -d $(dirname $report_file_path) ]; then
-      mkdir -p $(dirname $report_file_path)
-  fi
+         mkdir -p $(dirname $report_file_path)
+    fi
 
-  if [ ! -f $(basename $report_file_path) ]; then
-      touch $(basename $report_file_path)
-  fi
+    if [ -f $report_file_path ]; then
+        truncate -s 0 $report_file_path
+    else
+        touch $report_file_path
+    fi
+
+}
+
+remove_report_file() {
+    if [ $create_report = false ]; then
+        find $(dirname $report_file_path) -type f -name "$(basename $report_file_path)" -exec rm {} \;
+    fi
+}
+
+display_actual_user() {
+    echo -e "\nYou're running this tool as $yellowColour$(whoami)$endColour"
+    id
+    echo "\n"
 }
 
 os_information() {
-	(cat /proc/version || uname -a ) 1>>"$report_file_path" 2>/dev/null
+    echo -e "$yellowColour########## [ OS INFORMATION ] ###########$endColour\n" >> $report_file_path
+
+    (cat /proc/version || uname -a ) 1>>"$report_file_path" 2>/dev/null
 	lsb_release -a 1>>"$report_file_path" 2>/dev/null
 	cat /etc/os-release 1>>"$report_file_path" 2>/dev/null
+
+    echo -e "\n$yellowColour#########################################$endColour\n" >> $report_file_path
 }
 
 banner
+display_actual_user
 create_report_file
-
-echo -e "$yellowColour########## [ OS INFORMATION ] ###########$endColour\n" >> $report_file_path
 os_information
-echo -e "\n$yellowColour#########################################$endColour\n" >> $report_file_path
-
-if [ $create_report = false ]; then
-    find $(dirname $report_file_path) -type f -name "$(basename $report_file_path)" -exec rm {} \;
-fi
-
+remove_report_file
