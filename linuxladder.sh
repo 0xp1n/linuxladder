@@ -141,9 +141,31 @@ sudo_version() {
 
     if [ -n "$(command -v searchsploit)" ]; then
        searchsploit "$version" >> $report_file_path
+    else
+        echo -e "$redColour Sorry, searchsploit is not available in your system. $endColour Install it with$blueColour sudo apt update && sudo apt install exploitdb -y$endColour" >> $report_file_path
     fi
 }
 
+running_in_docker_container() {
+    echo -e "\n$yellowColour########## [ RUNNING INSIDE A DOCKER CONTAINER ] ###########$endColour\n" >> $report_file_path
+
+    if grep -q :/docker /proc/self/cgroup ; then
+        echo -e "$yellowColour WARNING:$endColour $grayColour You're inside a docker container, check$endColour $blueColour/proc/self/cgroup$endColour $grayColour for further details$endColour" >> $report_file_path
+    else
+        echo -e "$greenColour You are not inside docker container$endColour" >> $report_file_path
+    fi
+}
+
+root_folder_is_readable() {
+    echo -e "\n$yellowColour########## [ ROOT FOLDER READ PERMISSIONS ] ###########$endColour\n" >> $report_file_path
+
+    if [ -r /root ]; then
+        echo -e "/root folder$greenColour is readable$endColour" >> $report_file_path
+    else
+        echo -e "/root folder$redColour is not readable$endColour" >> $report_file_path
+
+    fi
+}
 
 banner
 display_actual_user
@@ -152,17 +174,23 @@ create_report_file
 echo -e "$cyanColour [+] Reading OS information...$endColour\n"
 os_information
 
-echo -e "$cyanColour [+] Checking PATH folders writeable permissions... $endColour\n"
+echo -e "$cyanColour [+] Checking PATH folders writeable permissions for your actual user... $endColour\n"
 writable_folders_in_path
+
+echo -e "$cyanColour [+] Checking if root folder is readable for your actual user...$endColour\n"
+root_folder_is_readable
 
 echo -e "$cyanColour [+] Reading system ENV variables to find some sensitive data...\n"
 credentials_on_env
 
-echo -e "$cyanColour [+] Reading sudo version and search for exploits...$endColour"
+echo -e "$cyanColour [+] Reading sudo version and search for exploits...$endColour\n"
 sudo_version
+
+echo -e "$cyanColour [+] Checking if you're running inside a Docker container...$endColour\n"
+running_in_docker_container
 
 #remove_report_file
 
 echo -e "\n$yellowColour [ LINUX PRIVILEGE ESCALATION SCAN COMPLETED! ] $endColour"
-echo -e "\n$yellowColour GIVE SOME LOVE IF YOU LIKED THIS TOOL ON$endColour$blueColour https://github.com/0xp1n/linuxladder$endColour, THANK YOU ANYWAY FOR YOUR SUPPORT!$endColour"
+echo -e "\n$yellowColour GIVE SOME 💚 IF YOU LIKED THIS TOOL ON$endColour$blueColour https://github.com/0xp1n/linuxladder$endColour, THANK YOU ANYWAY FOR YOUR SUPPORT!$endColour"
 
