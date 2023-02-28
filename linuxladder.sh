@@ -173,6 +173,19 @@ root_folder_is_readable() {
     fi
 }
 
+last_logged_users() {
+    echo -e "\n$yellowColour########## [ LAST LOGGED USERS IN THE SYSTEM ] ###########$endColour\n" >> $report_file_path
+
+    lastlog | grep -v "Never" 1>>$report_file_path 2>/dev/null
+}
+
+online_users() {
+    echo -e "\n$yellowColour########## [ ACTIVE USERS ] ###########$endColour\n" >> $report_file_path
+
+    w 1>>$report_file_path 2>/dev/null
+}
+
+
 banner
 display_actual_user
 create_report_file
@@ -197,6 +210,12 @@ sudo_version
 
 echo -e "$cyanColour [+] Checking if you're running inside a Docker container...$endColour\n"
 running_in_docker_container
+
+echo -e "$cyanColour [+] Last active logged users$endColour\n"
+last_logged_users
+
+echo -e "$cyanColour [+] Users in the system now$endColour\n"
+online_users
 
 #remove_report_file
 
