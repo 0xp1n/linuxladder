@@ -3,6 +3,7 @@
 set -u
 
 CURRENT_DIR=$(pwd)
+BASH_VERSION=$( (echo $BASH_VERSION || bash --version) | grep -Eo '[0-9]\.[0-9]{1,2}\.[0-9]{1,2}')
 
 # ANSII ESCAPE CODE COLOURS
 greenColour='\033[0;32m'
@@ -211,10 +212,10 @@ sudo_version
 echo -e "$cyanColour [+] Checking if you're running inside a Docker container...$endColour\n"
 running_in_docker_container
 
-echo -e "$cyanColour [+] Last active logged users$endColour\n"
+echo -e "$cyanColour [+] Retrieving last active logged users...$endColour\n"
 last_logged_users
 
-echo -e "$cyanColour [+] Users in the system now$endColour\n"
+echo -e "$cyanColour [+] Retrieving online users in the system now...$endColour\n"
 online_users
 
 #remove_report_file
