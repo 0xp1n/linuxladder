@@ -91,7 +91,7 @@ remove_report_file() {
 }
 
 display_actual_user() {
-    echo -e "\nYou're running this tool as $yellowColour$(whoami)$endColour"
+    echo -e "\nYou're running this tool as $yellowColour$(whoami)$endColour on $(date)"
     echo -e "$(id)\n"
 }
 
@@ -101,6 +101,12 @@ os_information() {
     (cat /proc/version || uname -a ) 1>>"$report_file_path" 2>/dev/null
 	lsb_release -a 1>>"$report_file_path" 2>/dev/null
 	cat /etc/os-release 1>>"$report_file_path" 2>/dev/null
+}
+
+architecture_information() {
+    echo -e "\n$yellowColour########## [ CPU ARCHITECTURE ] ###########$endColour\n" >> $report_file_path
+
+    lscpu 1>>"$report_file_path" 2>/dev/null
 }
 
 writable_folders_in_path() {
@@ -174,6 +180,9 @@ create_report_file
 echo -e "$cyanColour [+] Reading OS information...$endColour\n"
 os_information
 
+echo -e "$cyanColour [+] Reading ARCHITECTURE information...$endColour\n"
+architecture_information
+
 echo -e "$cyanColour [+] Checking PATH folders writeable permissions for your actual user... $endColour\n"
 writable_folders_in_path
 
@@ -192,5 +201,7 @@ running_in_docker_container
 #remove_report_file
 
 echo -e "\n$yellowColour [ LINUX PRIVILEGE ESCALATION SCAN COMPLETED! ] $endColour"
-echo -e "\n$yellowColour GIVE SOME 💚 IF YOU LIKED THIS TOOL ON$endColour$blueColour https://github.com/0xp1n/linuxladder$endColour, THANK YOU ANYWAY FOR YOUR SUPPORT!$endColour"
+echo -e "\n$yellowColour [ YOU CAN FIND THE DETAILED REPORT ON$greenColour $CURRENT_DIR/$report_file_path $endColour] $endColour"
+
+#echo -e "\n$yellowColour GIVE SOME 💚 IF YOU LIKED THIS TOOL ON$endColour$blueColour https://github.com/0xp1n/linuxladder$endColour, THANK YOU ANYWAY FOR YOUR SUPPORT!$endColour"
 
