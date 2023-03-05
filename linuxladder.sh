@@ -3,7 +3,7 @@
 set -u
 
 CURRENT_DIR=$(pwd)
-BASH_VERSION=$( (echo $BASH_VERSION || bash --version) | grep -Eo '[0-9]\.[0-9]{1,2}\.[0-9]{1,2}')
+BASH_VERSION=$(bash h --version | grep -Eo '[0-9]\.[0-9]{1,2}\.[0-9]{1,2}')
 
 # ANSII ESCAPE CODE COLOURS
 greenColour='\033[0;32m'
@@ -69,7 +69,7 @@ while getopts ":o:nh:" arg; do
     esac
 
 done
-shift $(expr $OPTIND - 1) # remove options from positional parameters
+shift $(( OPTIND - 1)) # remove options from positional parameters
 
 # Create the report file to fill all the information output after the enumeration
 create_report_file() {
@@ -97,6 +97,7 @@ display_actual_user() {
 }
 
 os_information() {
+    echo -e "$cyanColour [+] Reading OS information...$endColour\n"
     echo -e "$yellowColour########## [ OS INFORMATION ] ###########$endColour\n" >> $report_file_path
 
     (cat /proc/version || uname -a ) 1>>"$report_file_path" 2>/dev/null
@@ -105,6 +106,7 @@ os_information() {
 }
 
 architecture_information() {
+    echo -e "$cyanColour [+] Reading ARCHITECTURE information...$endColour\n"
     echo -e "\n$yellowColour########## [ CPU ARCHITECTURE ] ###########$endColour\n" >> $report_file_path
 
     lscpu 1>>"$report_file_path" 2>/dev/null
@@ -119,6 +121,7 @@ writable_folders_in_path() {
 
     echo $PATH | sed 's/:/\n/g' > "$tmp/paths"
 
+    echo -e "$cyanColour [+] Checking PATH folders writeable permissions for your actual user... $endColour\n"
     echo -e "\n$yellowColour########## [ PATH ENV ] ###########$endColour\n" >> $report_file_path
 
     while IFS= read -r bin_path; do
@@ -133,6 +136,8 @@ writable_folders_in_path() {
 }
 
 credentials_on_env() {
+     echo -e "$cyanColour [+] Reading system ENV variables to find some sensitive data...\n"
+
     if [ -n "$(command -v env)" ]; then
         echo -e "\n$yellowColour########## [ ENV VARIABLES FOUND FROM SPECIAL KEYWORDS ] ###########$endColour\n" >> $report_file_path
 
@@ -141,8 +146,9 @@ credentials_on_env() {
 }
 
 sudo_version() {
-    version=$(sudo -V | grep -i "sudo ver" | awk '{print $3}')
+     version=$(sudo -V | grep -i "sudo ver" | awk '{print $3}')
 
+    echo -e "$cyanColour [+] Reading sudo version and search for exploits...$endColour\n"
     echo -e "\n$yellowColour########## [ SUDO VERSION VULNERABILITY CHECK - SEARCHSPLOIT ] ###########$endColour\n" >> $report_file_path
     echo -e "VERSION: $version\n" >> $report_file_path
 
@@ -154,6 +160,7 @@ sudo_version() {
 }
 
 running_in_docker_container() {
+    echo -e "$cyanColour [+] Checking if you're running inside a Docker container...$endColour\n"
     echo -e "\n$yellowColour########## [ RUNNING INSIDE A DOCKER CONTAINER ] ###########$endColour\n" >> $report_file_path
 
     if grep -q :/docker /proc/self/cgroup ; then
@@ -164,6 +171,7 @@ running_in_docker_container() {
 }
 
 root_folder_is_readable() {
+    echo -e "$cyanColour [+] Checking if root folder is readable for your actual user...$endColour\n"
     echo -e "\n$yellowColour########## [ ROOT FOLDER READ PERMISSIONS ] ###########$endColour\n" >> $report_file_path
 
     if [ -r /root ]; then
@@ -175,12 +183,14 @@ root_folder_is_readable() {
 }
 
 last_logged_users() {
+    echo -e "$cyanColour [+] Retrieving last active logged users...$endColour\n"
     echo -e "\n$yellowColour########## [ LAST LOGGED USERS IN THE SYSTEM ] ###########$endColour\n" >> $report_file_path
 
     lastlog | grep -v "Never" 1>>$report_file_path 2>/dev/null
 }
 
 online_users() {
+    echo -e "$cyanColour [+] Retrieving online users in the system now...$endColour\n"
     echo -e "\n$yellowColour########## [ ACTIVE USERS ] ###########$endColour\n" >> $report_file_path
 
     w 1>>$report_file_path 2>/dev/null
@@ -191,31 +201,22 @@ banner
 display_actual_user
 create_report_file
 
-echo -e "$cyanColour [+] Reading OS information...$endColour\n"
 os_information
 
-echo -e "$cyanColour [+] Reading ARCHITECTURE information...$endColour\n"
 architecture_information
 
-echo -e "$cyanColour [+] Checking PATH folders writeable permissions for your actual user... $endColour\n"
 writable_folders_in_path
 
-echo -e "$cyanColour [+] Checking if root folder is readable for your actual user...$endColour\n"
 root_folder_is_readable
 
-echo -e "$cyanColour [+] Reading system ENV variables to find some sensitive data...\n"
 credentials_on_env
 
-echo -e "$cyanColour [+] Reading sudo version and search for exploits...$endColour\n"
 sudo_version
 
-echo -e "$cyanColour [+] Checking if you're running inside a Docker container...$endColour\n"
 running_in_docker_container
 
-echo -e "$cyanColour [+] Retrieving last active logged users...$endColour\n"
 last_logged_users
 
-echo -e "$cyanColour [+] Retrieving online users in the system now...$endColour\n"
 online_users
 
 #remove_report_file
