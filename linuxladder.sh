@@ -196,28 +196,46 @@ online_users() {
     w 1>>$report_file_path 2>/dev/null
 }
 
+enumerate_defenses() {
+    echo -e "$cyanColour [+] Enumerating possible defenses in the system...$endColour\n"
+    echo -e "\n$yellowColour########## [ DEFENSE SOFTWARE ] ###########$endColour\n" >> $report_file_path
+
+    # APP ARMOR
+    if [ `which aa-status 2>/dev/null` ]; then
+        aa-status 1>>"$report_file_path" 2>/dev/null
+    elif [ `which apparmor_status 2>/dev/null` ]; then
+        apparmor_status 1>>"$report_file_path" 2>/dev/null
+    elif [ `ls -d /etc/apparmor* 2>/dev/null` ]; then
+        ls -d /etc/apparmor* 1>>"$report_file_path" 2>/dev/null
+    else
+        echo -e "Not found AppArmor\n" >> $report_file_path
+    fi
+    # GRSECURITY
+    ((uname -r | grep "\-grsec" >/dev/null 2>&1 || grep "grsecurity" /etc/sysctl.conf >/dev/null 2>&1) && echo -e "\nFound grsecurity\n" >>"report_file_path" || echo -e "\nNot found grsecurity\n" >>"$report_file_path")
+
+    # PaX
+    (which paxctl-ng paxctl >/dev/null 2>&1 && echo -e "Found PaX\n" >>"$report_file_path" || echo -e "Not found PaX\n" >>"$report_file_path")
+
+    #ExecShield
+   (grep "exec-shield" /etc/sysctl.conf && echo -e "Found ExecShield\n" >>"$report_file_path" || echo "Not found Execshield\n" >>"$report_file_path")
+
+}
+
 
 banner
 display_actual_user
 create_report_file
 
 os_information
-
 architecture_information
-
 writable_folders_in_path
-
 root_folder_is_readable
-
 credentials_on_env
-
 sudo_version
-
 running_in_docker_container
-
 last_logged_users
-
 online_users
+enumerate_defenses
 
 #remove_report_file
 
